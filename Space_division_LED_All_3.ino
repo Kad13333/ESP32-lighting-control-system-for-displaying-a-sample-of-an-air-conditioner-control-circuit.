@@ -532,26 +532,96 @@ void p1_Cirecuit_Breaker() {
     leds2[i] = CRGB::Red;
   }
   for (int i = 11; i < 15 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Green;
+    leds2[i] = CRGB::Green;//ไม่มี
   }
   fadeAll_On();    
   FastLED.show(); 
 }
-void p2_Timer_Relalav() {
+void p2_Condensing_Unil_0() {
   FastLED.clear(); // ตั้งค่า LED ทุกดวงให้เป็น CRGB(0, 0, 0); // ดำ / ดับ
   // ---------- LED LINE 1 ----------
-  for (int i = 15; i < 20 && i < NUM_LEDS_2; i++) {
+  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  fadeAll_On();    
+  FastLED.show(); 
+}
+void p2_Timer_Relalav_1() {
+  FastLED.clear(); // ตั้งค่า LED ทุกดวงให้เป็น CRGB(0, 0, 0); // ดำ / ดับ
+  // ---------- LED LINE 1 ----------
+  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  for (int i = 21; i < 30 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  fadeAll_On();    
+  FastLED.show(); 
+}
+void p2_Delay_on_Make_2() {
+  FastLED.clear(); // ตั้งค่า LED ทุกดวงให้เป็น CRGB(0, 0, 0); // ดำ / ดับ
+  // ---------- LED LINE 1 ----------
+  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  fadeAll_On();    
+  FastLED.show(); 
+}
+void p3_Motot_FE() {
+  FastLED.clear(); // ตั้งค่า LED ทุกดวงให้เป็น CRGB(0, 0, 0); // ดำ / ดับ
+  // ---------- LED LINE 1 ----------
+  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(241,194,50);
+  }
+  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  fadeAll_On();    
+  FastLED.show(); 
+}
+void p4_Magnetic_Contactor() {
+  FastLED.clear(); // ตั้งค่า LED ทุกดวงให้เป็น CRGB(0, 0, 0); // ดำ / ดับ
+  // ---------- LED LINE 1 ----------
+  for (int i = 36; i < 40 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB::Blue;
   }
-  for (int i = 10; i < 20 && i < NUM_LEDS_2; i++) {
+  for (int i = 41; i < 45 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB::Red;
   }
-  for (int i = 20; i < 30 && i < NUM_LEDS_2; i++) {
+  for (int i = 46; i < 50 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB::Green;
   }
   fadeAll_On();    
   FastLED.show(); 
 }
+//-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-+/-/
 //--------------------- For use with CMD. -------------------
 // ไฟติดทีละลอท
 void fadeInSequential() {
