@@ -129,15 +129,16 @@ function toggle(b){
 
 /* ---------------- COMMAND ---------------- */
 function sendCmd(e){
-  if(e.key==='Enter'){
-    const cmd=document.getElementById('cmd').value;
-    fetch('/cmd',{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:'cmd='+encodeURIComponent(cmd)
-    });
-    document.getElementById('cmd').value='';
-  }
+  e.preventDefault();
+
+  const cmd = document.getElementById("cmd").value.trim();
+  if(!cmd) return;
+
+  fetch("/cmd",{
+    method:"POST",
+    headers:{ "Content-Type":"application/x-www-form-urlencoded" },
+    body:"cmd="+encodeURIComponent(cmd)
+  });
 }
 
 /* ---------------- LOG ---------------- */
@@ -165,7 +166,6 @@ setInterval(updateLog,1000);
   page += R"HTML(
 <div id="console">
   <div id="log">Serial Ready...</div>
-  <input id="cmd" onkeydown="sendCmd(event)" placeholder="command">
 </div>
 </body>
 </html>
@@ -197,6 +197,7 @@ void setButton(uint8_t index, bool state){
       if(state){ 
           ledPower = true;
           fadeAll_On();
+          setFixedColors();
           SerialBridge("ZONE A ENABLE");
           /*setSwitch(index, true, "SERIAL");*/
       }
@@ -344,14 +345,17 @@ void processCommand(String cmd, const char* source){
 
 //เพิ่ม handler ฝั่ง ESP32
 void handleCmd(){
-  if(!server.hasArg("cmd")){
+  String cmd = server.arg("cmd");   
+
+  Serial.print("CMD > ");
+  Serial.println(cmd);
+
+  if(cmd.length() == 0){
     server.send(400,"text/plain","NO CMD");
     return;
   }
 
-  String cmd = server.arg("cmd");
   processCommand(cmd, "WEB");
-
   server.send(200,"text/plain","OK");
 }
 
@@ -388,7 +392,7 @@ void readButtons() {
 
     // ตรวจเฉพาะตอน "ตำแหน่งสวิตช์เปลี่ยนจริง"
     if (current != lastHWState[i]) {
-      delay(20); // debounce
+      //delay(20); // debounce
       current = digitalRead(BTN_PIN[i]);
 
       if (current != lastHWState[i]) {
@@ -414,7 +418,7 @@ void fadeAll_On() { //เปิด
   for (int b = 0; b <= globalBrightness; b += Brightness_delay) {
     FastLED.setBrightness(b);
     FastLED.show();
-    delay(Fadet_time);
+    //delay(Fadet_time);
   }
 }
 
@@ -422,7 +426,7 @@ void fadeAll_Off() { //ปิด
   for (int b = globalBrightness; b >= 0; b -= Brightness_delay) {
     FastLED.setBrightness(b);
     FastLED.show();
-    delay(Fadet_time);
+    //delay(Fadet_time);
   }
 }
 
@@ -434,7 +438,7 @@ void fadeAll_Fadet(int fromB, int toB) { //ค่อยๆเปลียน
   for (int b = fromB; b != toB; b += step) {
     FastLED.setBrightness(b);
     FastLED.show();
-    delay(Fadet_time);
+    //delay(Fadet_time);
   }
 
   FastLED.setBrightness(toB);
@@ -487,7 +491,7 @@ void rainbowLoop() {
 
   hue++;
   FastLED.show();
-  delay(20);
+  //delay(20);
 }
 
 //--------------------- The wiring sequence for each device. -----------------
@@ -593,6 +597,7 @@ void p4_Magnetic_Contactor(bool on) {
 //-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-+/-/
 //--------------------- For use with CMD. -------------------
 // ไฟติดทีละลอท
+
 void fadeInSequential() {
   if (!ledPower) return;
   fadeAll_Off();
@@ -605,7 +610,7 @@ void fadeInSequential() {
     for (int b = 0; b <= globalBrightness; b += Brightness_delay_2) {
       leds1[i] = CHSV(160, 255, b);  // สีฟ้าอ่อน → ฟ้าเข้ม (ปรับสีได้)
       FastLED.show();
-      delay(5);
+      //delay(5);
     }
 
     leds1[i] = CHSV(160, 255, globalBrightness);
@@ -625,7 +630,7 @@ void fadeInSequential_Custom(int countLEDs) {
     for (int b = 0; b <= globalBrightness; b += Brightness_delay_2) {
       leds1[i] = CHSV(160, 255, b);
       FastLED.show();
-      delay(5);
+      //delay(5);
     }
 
     leds1[i] = CHSV(160, 255, globalBrightness);
@@ -691,6 +696,25 @@ void line3_zoneOff(int start, int end) {
   FastLED.show();
 }
 
+void rainbowLoopNonBlocking() {
+  static uint32_t lastUpdate = 0;
+  static uint8_t baseHue = 0;
+
+  if (millis() - lastUpdate < 1) return; // 50 FPS
+  lastUpdate = millis();
+
+  for (int i = 0; i < NUM_LEDS_1; i++)
+    leds1[i] = CHSV(baseHue + i * 5, 255, globalBrightness);
+
+  for (int i = 0; i < NUM_LEDS_2; i++)
+    leds2[i] = CHSV(baseHue + i * 5, 255, globalBrightness);
+
+  for (int i = 0; i < NUM_LEDS_3; i++)
+    leds3[i] = CHSV(baseHue + i * 5, 255, globalBrightness);
+
+  baseHue += 0.2;   // ขยับช้า
+  FastLED.show();
+}
 //-------------------Read commands via Serial. (CMD)------------------------
 // อ่านคำสั่งผ่าน Serial ใช้สำหรับการติดตั้ง
 void checkCommand() {
@@ -847,6 +871,7 @@ void checkCommand() {
 
 //---------------------- Data export setup. ----------------------------
 //การตั้งค่าส่งออกข้อมูล
+
 void setup() {
   Serial.begin(115200);
   WiFi.mode(WIFI_AP);
@@ -886,7 +911,7 @@ void loop() {
 
 
   if (rainbowMode && ledPower) {
-    rainbowLoop();
+    rainbowLoopNonBlocking();
   }
 
 }
