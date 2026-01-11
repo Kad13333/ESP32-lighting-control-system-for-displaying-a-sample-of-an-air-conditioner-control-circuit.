@@ -7,15 +7,14 @@
 #define LED_PIN_1     5         // GPIO ของบอร์ด ZY-ESP32
 #define LED_PIN_2   18          // GPIO ของบอร์ด ZY-ESP32
 #define LED_PIN_3   19          // GPIO ของบอร์ด ZY-ESP32
-#define NUM_LEDS_1    58        // จำนวนหลอดตามจริง ของวงจรที1
+#define NUM_LEDS_1    59        // จำนวนหลอดตามจริง ของวงจรที1
 #define NUM_LEDS_2    119        // จำนวนหลอดตามจริง ของวงจรที2
 #define NUM_LEDS_3    200        // จำนวนหลอดตามจริง ของวงจรที3
 #define LED_TYPE    WS2811      // 72D ใช้โปรโตคอลแบบ WS2811
 #define COLOR_ORDER RGB         // การเรียงลำดับสีไฟ
-#define BTN_COUNT 9             // ขาสวิทช์
-#define SW_po1    0             // ข้อมูลคำสั่งของ สวิทช์ กลุ่มที่ 1
-#define SW_po2    1             // ข้อมูลคำสั่งของ สวิทช์ กลุ่มที่ 2
-#define SW_po3    2             // ข้อมูลคำสั่งของ สวิทช์ กลุ่มที่ 3
+#define BTN_COUNT 5             // ขาสวิตช์จริง 
+#define HW_BTN_COUNT   5        // จำนวนสวิตช์จริง (ฮาร์ดแวร์)
+#define WEB_BTN_COUNT  9        // จำนวนปุ่มในเว็บ
 
 // ---------------- Set up basic LED settings. ---------------------
 // ตัวเก็บขอมูล
@@ -41,14 +40,15 @@ uint8_t Brightness_delay_2 = 4;  // หน่วงเวลาความส�
 // ตัวแปรโหมด
 bool ledPower = true;         // เปิด/ปิดไฟทั้งหมด
 bool rainbowMode = false;     // โหมดสายรุ้ง
+bool requestRainbow = false;
 
 // ---------------- Set up basic switches. ---------------------
 //ตั้งค่าสวิทช์พื้นฐาน
-const uint8_t BTN_PIN[BTN_COUNT] = {25, 26, 27, 32, 33};           // ขาปุ่มกด{27, 26, 25, 33, 32};
+const uint8_t BTN_PIN[HW_BTN_COUNT] = {25, 26, 27, 32, 33};           // ขาปุ่มกด{27, 26, 25, 33, 32};
 
-bool btnState[BTN_COUNT]   = {false, false, false, false, false, false, false, false, false};     // สถานะ ON / OFF กลาง
-bool lastBtnState[BTN_COUNT] = {false, false, false, false, false, false, false, false, false};
-bool lastBtn[BTN_COUNT]   = {HIGH, HIGH, HIGH, HIGH, HIGH,};         // สถานะปุ่มก่อนหน้า
+bool btnState[WEB_BTN_COUNT] = {0};     // สถานะ ON / OFF กลาง
+bool lastHWState[HW_BTN_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH};
+bool lastBtn[HW_BTN_COUNT]   = {HIGH, HIGH, HIGH, HIGH, HIGH,};         // สถานะปุ่มก่อนหน้า
 
 // ---------------- WiFi AP. ---------------------
 const char* ssid = "ESP32_CONTROL";
@@ -58,10 +58,10 @@ DNSServer dnsServer;
 WebServer server(80);
 
 //Button 
-const char* buttonName[9] = {
-  "ZONE A","ZONE B","ZONE C",
+const char* buttonName[10] = {
+  "Cirecuit Breaker","Timer Relalav","ZONE C",
   "RAINBOW","RED","GREEN","BLUE",
-  "ALL OFF","RESET"
+  "ALL OFF","RESET","123"
 }; 
 // Serial Log
 String serialLog = "";
@@ -83,119 +83,89 @@ String MAIN_page(){
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 button{width:100%;height:45px;font-size:18px;margin:5px}
 .on{background:green;color:white}
 .off{background:red;color:white}
-#console{position:fixed;bottom:0;width:100%;background:black;color:#0f0}
+#console{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:black;
+  color:#0f0;
+}
 #log{
   height:120px;
   overflow-y:auto;
-  white-space:pre;   /* สำคัญมาก */
+  white-space:pre;
   padding:5px;
 }
 </style>
 
 <script>
-setInterval(()=>{
+/* ---------------- STATE ---------------- */
+function updateState(){
   fetch('/state')
     .then(r=>r.json())
     .then(s=>{
       for(let i=1;i<=9;i++){
-        let b = document.getElementById('b'+i);
+        const b=document.getElementById('b'+i);
         b.className = s['b'+i] ? 'on' : 'off';
       }
     });
-},500);
-</script>
+}
+setInterval(updateState,500);
 
-<script>
-function toggle(btn){
-  fetch('/toggle?b=' + btn)
-    .then(r => r.json())
-    .then(data => {
-      const el = document.getElementById('b' + btn);
-      if(data.state){
-        el.className = 'on';
-      }else{
-        el.className = 'off';
-      }
+/* ---------------- TOGGLE ---------------- */
+function toggle(b){
+  fetch('/toggle?b='+b)
+    .then(r=>r.json())
+    .then(d=>{
+      document.getElementById('b'+b)
+        .className = d.state ? 'on' : 'off';
     });
 }
 
+/* ---------------- COMMAND ---------------- */
 function sendCmd(e){
-  if(e.key === 'Enter'){
-    const cmd = document.getElementById('cmd').value;
-    fetch('/cmd?cmd=' + encodeURIComponent(cmd));
-    document.getElementById('cmd').value = '';
+  if(e.key==='Enter'){
+    const cmd=document.getElementById('cmd').value;
+    fetch('/cmd',{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'cmd='+encodeURIComponent(cmd)
+    });
+    document.getElementById('cmd').value='';
   }
 }
 
-// ดึง Serial log ทุก 1 วิ
-setInterval(()=>{
+/* ---------------- LOG ---------------- */
+function updateLog(){
   fetch('/log')
     .then(r=>r.text())
     .then(t=>{
-      const log = document.getElementById("log");
-      log.textContent = t;
-      log.scrollTop = log.scrollHeight;
+      const log=document.getElementById('log');
+      log.textContent=t;
+      log.scrollTop=log.scrollHeight;
     });
-},1000);
+}
+setInterval(updateLog,1000);
 </script>
 
-<input id="cmd" placeholder="set on 1">
-<button onclick="sendCmd()">SEND</button>
-
-<script>
-function sendCmd(){
-  fetch("/cmd",{
-    method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body:"cmd="+encodeURIComponent(
-      document.getElementById("cmd").value
-    )
-  });
-}
-</script>
-
-<script>
-function toggle(b){
- fetch('/toggle?b='+b)
- .then(r=>r.json())
- .then(d=>{
-  let e=document.getElementById('b'+b);
-  e.className=d.state?'on':'off';
- });
-}
-
-setInterval(()=>{
- fetch('/log').then(r=>r.text()).then(t=>{
-  log.textContent=t;
-  log.scrollTop=log.scrollHeight;
- });
-},1000);
-
-function sendCmd(e){
- if(e.key==='Enter'){
-  fetch('/cmd?cmd='+cmd.value);
-  cmd.value='';
- }
-}
-</script>
 </head>
 <body>
 <h2>ESP32 Control</h2>
 )HTML";
 
   for(int i=0;i<9;i++){
-    page += "<button id='b"+String(i+1)+"' class='off' onclick='toggle(";
-    page += String(i+1)+")'>"+String(buttonName[i])+"</button>";
+    page += "<button id='b"+String(i+1)+"' class='off' onclick='toggle("+String(i+1)+")'>"+String(buttonName[i])+"</button>";
   }
 
   page += R"HTML(
 <div id="console">
- <div id="log">Serial Ready...</div>
- <input id="cmd" onkeydown="sendCmd(event)" placeholder="command">
+  <div id="log">Serial Ready...</div>
+  <input id="cmd" onkeydown="sendCmd(event)" placeholder="command">
 </div>
 </body>
 </html>
@@ -204,12 +174,14 @@ function sendCmd(e){
   return page;
 }
 
+
+
 //ให้ “เว็บรู้” เมื่อบอร์ดถูกสั่งจากภายนอก สร้าง API ส่งสถานะทั้งหมด
 void handleState(){
   String json = "{";
-  for(int i=0;i<9;i++){
-    json += "\"b"+String(i+1)+"\":";
-    json += btnState[i] ? "true" : "false";
+  for(int i=0;i<WEB_BTN_COUNT;i++){
+      json += "\"b"+String(i+1)+"\":";
+      json += btnState[i] ? "true" : "false";
     if(i<8) json += ",";
   }
   json += "}";
@@ -222,18 +194,28 @@ void setButton(uint8_t index, bool state){
 // ===== logic แยกของแต่ละปุ่ม =====
   switch(index){
     case 0:
-      if(state){ SerialBridge("ZONE A ENABLE");
-                /*setSwitch(index, true, "SERIAL");*/
+      if(state){ 
+          ledPower = true;
+          fadeAll_On();
+          SerialBridge("ZONE A ENABLE");
+          /*setSwitch(index, true, "SERIAL");*/
       }
-      else{      SerialBridge("ZONE A DISABLE");
-               /* setSwitch(index, false, "SERIAL");*/
+      else{
+          ledPower = false;
+          fadeAll_Off();
+          SerialBridge("ZONE A DISABLE");
+           /* setSwitch(index, false, "SERIAL");*/
       }        
       break;
 
     case 1:
-      if(state){ SerialBridge("ZONE B ENABLE");
+      if(state){ 
+        p4_Magnetic_Contactor(true);
+        SerialBridge("ZONE B ENABLE");
       }
-      else{      SerialBridge("ZONE B DISABLE");
+      else{      
+        p4_Magnetic_Contactor(false);
+        SerialBridge("ZONE B DISABLE");
       }
       break;
 
@@ -245,9 +227,13 @@ void setButton(uint8_t index, bool state){
       break;
 
     case 3:
-      if(state){ SerialBridge("RAINBOW MODE ON");
+      if(state){ 
+        rainbowMode = true;
+        SerialBridge("RAINBOW MODE ON");
       }
-      else{      SerialBridge("RAINBOW MODE OFF");
+      else{      
+        rainbowMode = false;
+        SerialBridge("RAINBOW MODE OFF");
       }
       break;
     case 4:
@@ -283,7 +269,14 @@ void setButton(uint8_t index, bool state){
                  fadeAll_On();
                  Serial.println("MODE: RAINBOW");
       }
-      else{      SerialBridge("RAINBOW MODE OFF");
+      else{      
+                         fadeAll_Off();
+                 rainbowLoop();
+                 ledPower = false;
+                 rainbowMode = false;
+                 fadeAll_On();
+                 Serial.println("MODE: RAINBOW");
+        SerialBridge("RAINBOW MODE OFF");
       }
       break;
   }
@@ -337,7 +330,7 @@ void processCommand(String cmd, const char* source){
     String action = cmd.substring(s1 + 1, s2);
     int index = cmd.substring(s2 + 1).toInt() - 1;
 
-    if(index < 0 || index >= BTN_COUNT) return;
+    if(index < 0 || index >= HW_BTN_COUNT) return;
 
     if(action == "on"){
       setSwitch(index, true, source);
@@ -370,9 +363,9 @@ void toggleButton(uint8_t i) {
 
 //ฟังก์ชันตั้งค่าสวิตช์จากภายนอก
 void setSwitch(uint8_t i, bool state, const char* source){
-  if(i >= BTN_COUNT) return;
-  if(btnState[i] == state) return;
+  if(i >= WEB_BTN_COUNT) return;
 
+  if(btnState[i] == state) return;
   btnState[i] = state;
 
   SerialBridge(
@@ -381,57 +374,34 @@ void setSwitch(uint8_t i, bool state, const char* source){
     (state ? "ON" : "OFF")
   );
 
-  setButton(i, state);   // เรียก logic จริง
+  if(i < HW_BTN_COUNT) {
+    setButton(i, state);   // hardware logic
+  }
 }
+
 
 // อ่านปุ่ม
 void readButtons() {
-  for (uint8_t i = 0; i < BTN_COUNT; i++) {
-    bool nowBtn = digitalRead(BTN_PIN[i]);
+  for (uint8_t i = 0; i < HW_BTN_COUNT; i++) {
 
-    if (lastBtn[i] == HIGH && nowBtn == LOW) {
-      toggleButton(i);
-      delay(150); // debounce
+    bool current = digitalRead(BTN_PIN[i]); // HIGH / LOW
+
+    // ตรวจเฉพาะตอน "ตำแหน่งสวิตช์เปลี่ยนจริง"
+    if (current != lastHWState[i]) {
+      delay(20); // debounce
+      current = digitalRead(BTN_PIN[i]);
+
+      if (current != lastHWState[i]) {
+        lastHWState[i] = current;
+
+        bool state = (current == LOW); // LOW = ON
+        setSwitch(i, state, "SWITCH");
+      }
     }
-
-    lastBtn[i] = nowBtn;
   }
 }
 
-//สังเเต่หนึง
-void readButtons_on() {
 
-  if (!lastBtnState[0] && btnState[0]) {
-    ledPower = true;
-    fadeAll_On();
-    Serial.println("POWER ON");
-  }
-  if (lastBtnState[0] && !btnState[0]) {
-    ledPower = false;
-    fadeAll_Off();
-    Serial.println("POWER OFF");
-  }
-
-  if (!lastBtnState[1] && btnState[1]) {
-    Serial.println("hello world2");
-  }
-
-  if (!lastBtnState[2] && btnState[2]) {
-    Serial.println("hello world3");
-  }
-
-  if (!lastBtnState[3] && btnState[3]) {
-    Serial.println("hello world4");
-  }
-
-  if (!lastBtnState[4] && btnState[4]) {
-    Serial.println("hello world5");
-  }
-
-  for (int i = 0; i < BTN_COUNT; i++) {
-    lastBtnState[i] = btnState[i];
-  }
-}
 
 // ---------------- LED control commands. ---------------------
 //คุมความสว่าง (ศูนย์กลาง)
@@ -606,20 +576,19 @@ void p3_Motot_FE() {
   fadeAll_On();    
   FastLED.show(); 
 }
-void p4_Magnetic_Contactor() {
-  FastLED.clear(); // ตั้งค่า LED ทุกดวงให้เป็น CRGB(0, 0, 0); // ดำ / ดับ
-  // ---------- LED LINE 1 ----------
-  for (int i = 36; i < 40 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Blue;
-  }
-  for (int i = 41; i < 45 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Red;
-  }
-  for (int i = 46; i < 50 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Green;
-  }
-  fadeAll_On();    
-  FastLED.show(); 
+void p4_Magnetic_Contactor(bool on) {
+  FastLED.clear();
+
+  CRGB c1 = on ? CRGB::Blue  : CRGB::Blue;
+  CRGB c2 = on ? CRGB::Red   : CRGB::Blue;
+  CRGB c3 = on ? CRGB::Green : CRGB::Blue;
+
+  for (int i = 36; i < 40 && i < NUM_LEDS_2; i++) leds2[i] = c1;
+  for (int i = 41; i < 45 && i < NUM_LEDS_2; i++) leds2[i] = c2;
+  for (int i = 46; i < 50 && i < NUM_LEDS_2; i++) leds2[i] = c3;
+
+  fadeAll_On();
+  FastLED.show();
 }
 //-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-+/-/
 //--------------------- For use with CMD. -------------------
@@ -664,16 +633,6 @@ void fadeInSequential_Custom(int countLEDs) {
   }
 }
 
-// เปิด-ปิดเฉพาะ Zone (ไม่กระทบ Zone อื่น)
-void zoneOff(int startLED, int endLED) {
-  startLED = constrain(startLED, 0, NUM_LEDS_1 - 1);
-  endLED   = constrain(endLED, 0, NUM_LEDS_1 - 1);
-
-  for (int i = startLED; i <= endLED; i++) {
-    leds1[i] = CRGB::Black;
-  }
-  FastLED.show();
-}
 // ---------- LED LINE 1 ----------
 void line1_zoneOn(int start, int end, CRGB color) {
   start = constrain(start, 0, NUM_LEDS_1 - 1);
@@ -728,17 +687,6 @@ void line3_zoneOff(int start, int end) {
 
   for (int i = start; i <= end; i++) {
     leds3[i] = CRGB::Black;
-  }
-  FastLED.show();
-}
-// เปลียน สี ทังหมด
-void Change_color(CRGB* leds, int numLeds,int r, int g, int b,int start, int end) {
-
-  start = constrain(start, 0, numLeds - 1);
-  end   = constrain(end,   0, numLeds - 1);
-
-  for (int i = start; i <= end; i++) {
-    leds[i] = CRGB(r, g, b);
   }
   FastLED.show();
 }
@@ -915,7 +863,7 @@ void setup() {
   Serial.println("ESP32 READY");
   Serial.println(WiFi.softAPIP());
 
-  for (uint8_t i = 0; i < BTN_COUNT; i++) {
+  for (uint8_t i = 0; i < HW_BTN_COUNT; i++) {
     pinMode(BTN_PIN[i], INPUT_PULLUP);
   }
 
@@ -933,9 +881,8 @@ void setup() {
 void loop() {
   dnsServer.processNextRequest();
   server.handleClient();
-  readButtons();  // ปุ่มจริง
   checkCommand(); // คำสั่ง cmd
-  readButtons_on(); // logic ของคุณ
+  readButtons();   //สวิตช์เปิด–ปิดจริง
 
 
   if (rainbowMode && ledPower) {
