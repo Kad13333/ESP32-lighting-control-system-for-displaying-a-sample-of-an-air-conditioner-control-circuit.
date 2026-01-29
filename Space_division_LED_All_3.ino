@@ -60,7 +60,7 @@ WebServer server(80);
 
 //Button 
 const char* buttonName[11] = {
-  "Power ON ALL","Motpr SWEEP","Motpr HIGH","Motpr MEDLUM","Motpr LOW","COMP There is no delay.","COMP Timer Relav","COMP Delay on Make","Below the circuit breaker.","Aoto", "??"
+  "Power ON ALL","Motpr SWEING","Motpr HIGH","Motpr MEDLUM","Motpr LOW","COMP There is no delay.","COMP Timer Relay","COMP Delay on Make","Below the circuit breaker.","Aoto", "??"
 }; 
 // Serial Log
 String serialLog = "";
@@ -84,63 +84,82 @@ String MAIN_page(){
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-button{width:100%;height:45px;font-size:18px;margin:5px}
-.on{background:green;color:white}
-.off{background:red;color:white}
-#console{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:black;
-  color:#0f0;
+/* ---------- BASE ---------- */
+body {
+  margin: 0;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
 }
-#log{
-  height:120px;
-  overflow-y:auto;
-  white-space:pre;
-  padding:5px;
+
+/* ---------- TITLE ---------- */
+h2 {
+  text-align: center;
+  margin: 10px 0;
+}
+
+/* ---------- BUTTON ---------- */
+button {
+  width: 100%;
+  height: 48px;
+  font-size: 18px;
+  margin: 6px 0;
+  border: none;
+  border-radius: 6px;
+}
+
+.on {
+  background: #2ecc71;
+  color: white;
+}
+
+.off {
+  background: #e74c3c;
+  color: white;
+}
+
+/* ---------- CONSOLE ---------- */
+#console {
+  margin-top: 15px;
+  background: black;
+  color: #00ff00;
+  border-radius: 6px;
+}
+
+#log {
+  height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  padding: 8px;
+  font-size: 14px;
 }
 </style>
 
 <script>
-/* ---------------- STATE ---------------- */
+/* ---------- STATE ---------- */
 function updateState(){
   fetch('/state')
     .then(r=>r.json())
     .then(s=>{
       for(let i=1;i<=11;i++){
         const b=document.getElementById('b'+i);
-        b.className = s['b'+i] ? 'on' : 'off';
+        if(b) b.className = s['b'+i] ? 'on' : 'off';
       }
     });
 }
-setInterval(updateState,500);
+setInterval(updateState,1000);
 
-/* ---------------- TOGGLE ---------------- */
+/* ---------- TOGGLE ---------- */
 function toggle(b){
   fetch('/toggle?b='+b)
     .then(r=>r.json())
     .then(d=>{
-      document.getElementById('b'+b)
-        .className = d.state ? 'on' : 'off';
+      document.getElementById('b'+b).className =
+        d.state ? 'on' : 'off';
     });
 }
 
-/* ---------------- COMMAND ---------------- */
-function sendCmd(e){
-  e.preventDefault();
-
-  const cmd = document.getElementById("cmd").value.trim();
-  if(!cmd) return;
-
-  fetch("/cmd",{
-    method:"POST",
-    headers:{ "Content-Type":"application/x-www-form-urlencoded" },
-    body:"cmd="+encodeURIComponent(cmd)
-  });
-}
-
-/* ---------------- LOG ---------------- */
+/* ---------- LOG ---------- */
 function updateLog(){
   fetch('/log')
     .then(r=>r.text())
@@ -155,23 +174,29 @@ setInterval(updateLog,1000);
 
 </head>
 <body>
-<h2>ESP32 Control</h2>
+
+<h2>Demonstration Set of Electrical System for Refrigeration Equipment</h2>
 )HTML";
 
-  for(int i = 0;i < WEB_BTN_COUNT; i++){
-    page += "<button id='b"+String(i+1)+"' class='off' onclick='toggle("+String(i+1)+")'>"+String(buttonName[i])+"</button>";
+  /* ---------- BUTTON LIST ---------- */
+  for(int i = 0; i < WEB_BTN_COUNT; i++){
+    page += "<button id='b"+String(i+1)+"' class='off' onclick='toggle("+String(i+1)+")'>"
+         + String(buttonName[i]) + "</button>";
   }
 
+  /* ---------- CONSOLE ---------- */
   page += R"HTML(
 <div id="console">
   <div id="log">Serial Ready...</div>
 </div>
+
 </body>
 </html>
 )HTML";
 
   return page;
 }
+
 
 
 
@@ -226,80 +251,104 @@ void setButton(uint8_t index, bool state){
 
     case 1:
       if(state){ 
-        p4_Magnetic_Contactor(true);
-        SerialBridge("Motpr SWEEP ON");
+        SerialBridge("Motpr SWEING ON");
+        p1_Motpr_SWEING_ON();
       }
       else{      
-        p4_Magnetic_Contactor(false);
-        SerialBridge("Motpr SWEEP OFF");
+        SerialBridge("Motpr SWEING OFF");
+        p1_Motpr_SWEING_OFF();
       }
       break;
 
     case 2:
-      if(state){ SerialBridge("Motpr HIGH ON");
+      if(state){ 
+        SerialBridge("Motpr HIGH ON");
+        p1_Motpr_HIGH_ON();
       }
-      else{      SerialBridge("Motpr HIGH OFF");
+      else{
+        SerialBridge("Motpr HIGH OFF");
+        p1_Motpr_HIGH_OFF();
       }
       break;
 
     case 3:
       if(state){ 
-        rainbowMode = true;
         SerialBridge("Motpr MEDLUM ON");
+        p1_Motpr_MEDLUM_ON();
       }
       else{      
-        rainbowMode = false;
         SerialBridge("Motpr MEDLUM OFF");
+        p1_Motpr_MEDLUM_OFF();
       }
       break;
     case 4:
-      if(state){ SerialBridge("Motpr LOW ON");
+      if(state){
+        SerialBridge("Motpr LOW ON");
+        p1_Motpr_LOW_ON();
       }
-      else{      SerialBridge("Motpr LOW OFF");
+      else{
+        SerialBridge("Motpr LOW OFF");
+        p1_Motpr_LOW_OFF();
       }
       break;
       case 5:
-      if(state){ SerialBridge("COMP There is no delay. ON");
-                 p2_Condensing_Unil_0_ON();
+      if(state){
+        SerialBridge("COMP There is no delay. ON");
+        p2_Condensing_Unil_0_ON();
       }
-      else{      SerialBridge("COMP There is no delay. OFF");
-                 p2_Condensing_Unil_0_OFF();
+      else{ 
+        SerialBridge("COMP There is no delay. OFF");
+        p2_Condensing_Unil_0_OFF();
       }
       break;
       case 6:
-      if(state){ SerialBridge("COMP Timer Relav ON");
-                 p2_Timer_Relalav_1_ON();
+      if(state){
+         SerialBridge("COMP Timer Relay ON");
+        p2_Timer_Relay_1_ON();
       }
-      else{      SerialBridge("COMP Timer Relav OFF");
-                p2_Timer_Relalav_1_OFF();
+      else{   
+        SerialBridge("COMP Timer Relay OFF");
+        p2_Timer_Relay_1_OFF();
       }
       break;
       case 7:
-      if(state){ SerialBridge("COMP Delay on Make ON");
-                 p2_Delay_on_Make_2_ON();
+      if(state){ 
+        SerialBridge("COMP Delay on Make ON");
+        p2_Delay_on_Make_2_ON();
       }
-      else{      SerialBridge("COMP Delay on Make OFF");
-                 p2_Delay_on_Make_2_OFF();
+      else{ 
+        SerialBridge("COMP Delay on Make OFF");
+        p2_Delay_on_Make_2_OFF();
       }
       break;
       case 8:
-      if(state){ SerialBridge("RBelow the circuit breaker. ON");
-                 p1_Cirecuit_Breaker_ON();
+      if(state){ 
+        SerialBridge("RBelow the circuit breaker. ON");
+        p1_Cirecuit_Breaker_ON();
       }
-      else{      SerialBridge("Below the circuit breaker. OFF");
-                 p1_Cirecuit_Breaker_OFF();
+      else{
+        SerialBridge("Below the circuit breaker. OFF");
+        p1_Cirecuit_Breaker_OFF();
       }
       break;
       case 9:
-      if(state){ SerialBridge("Aoto ON");
+      if(state){ 
+        SerialBridge("Aoto ON");
+        ALL_Black_ON();
       }
-      else{      SerialBridge("Aoto OFF");
+      else{
+        SerialBridge("Aoto OFF");
+        ALL_Black_OFF();
       }
       break;
       case 10:
-      if(state){ SerialBridge(" ON");
+      if(state){ 
+        SerialBridge(" ON");
+        rainbowMode = true;
       }
-      else{      SerialBridge(" OFF");
+      else{
+        SerialBridge(" OFF");
+        rainbowMode = false;
       }
       break;
   }
@@ -525,7 +574,7 @@ void p1_Cirecuit_Breaker_ON() {
     leds2[i] = CRGB::Red;
   }
   for (int i = 11; i < 15 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Green;//ไม่มี
+    leds2[i] = CRGB::Green;
   }
 
   FastLED.show(); 
@@ -542,6 +591,62 @@ void p1_Cirecuit_Breaker_OFF() {
     leds2[i] = CRGB::Blue;//ไม่มี
   }
   
+  FastLED.show(); 
+}
+void p1_Motpr_SWEING_ON() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 0; i < 20 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Blue;
+  }
+  FastLED.show(); 
+}
+void p1_Motpr_SWEING_OFF() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 0; i < 20 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+void p1_Motpr_HIGH_ON() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 21; i < 40 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Red;
+  }
+  FastLED.show(); 
+}
+void p1_Motpr_HIGH_OFF() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 21; i < 40 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+void p1_Motpr_MEDLUM_ON() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 41; i < 60 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Green;
+  }
+  FastLED.show(); 
+}
+void p1_Motpr_MEDLUM_OFF() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 41; i < 60 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+void p1_Motpr_LOW_ON() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 61; i < 80 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB(207,0,255);
+  }
+  FastLED.show(); 
+}
+void p1_Motpr_LOW_OFF() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 61; i < 80 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
   FastLED.show(); 
 }
 void p2_Condensing_Unil_0_ON() {
@@ -578,7 +683,7 @@ void p2_Condensing_Unil_0_OFF() {
    
   FastLED.show(); 
 }
-void p2_Timer_Relalav_1_ON() {
+void p2_Timer_Relay_1_ON() {
   // ---------- LED LINE 2 ----------
   for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB(241,194,50);
@@ -591,7 +696,7 @@ void p2_Timer_Relalav_1_ON() {
   }
    
   FastLED.show(); 
-}void p2_Timer_Relalav_1_OFF() {
+}void p2_Timer_Relay_1_OFF() {
   // ---------- LED LINE 2 ----------
   for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB::Black;
@@ -658,6 +763,21 @@ void p3_Motot_FE_ON() {
 void p4_Magnetic_Contactor(bool on) {
 
   FastLED.show();
+}
+
+void ALL_Black_ON() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 1; i < 119 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+void ALL_Black_OFF() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 1; i < 1 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  FastLED.show(); 
 }
 //-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-+/-/
 //--------------------- For use with CMD. -------------------
@@ -760,7 +880,6 @@ void line3_zoneOff(int start, int end) {
   }
   FastLED.show();
 }
-
 void rainbowLoopNonBlocking() {
   static uint32_t lastUpdate = 0;
   static float baseHue = 0;
