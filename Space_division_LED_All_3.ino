@@ -7,9 +7,9 @@
 #define LED_PIN_1     5         // GPIO ของบอร์ด ZY-ESP32
 #define LED_PIN_2   18          // GPIO ของบอร์ด ZY-ESP32
 #define LED_PIN_3   19          // GPIO ของบอร์ด ZY-ESP32
-#define NUM_LEDS_1    59        // จำนวนหลอดตามจริง ของวงจรที1
-#define NUM_LEDS_2    119        // จำนวนหลอดตามจริง ของวงจรที2
-#define NUM_LEDS_3    200        // จำนวนหลอดตามจริง ของวงจรที3
+#define NUM_LEDS_1    73        // จำนวนหลอดตามจริง ของวงจรที1
+#define NUM_LEDS_2    34        // จำนวนหลอดตามจริง ของวงจรที2
+#define NUM_LEDS_3    61        // จำนวนหลอดตามจริง ของวงจรที3
 #define LED_TYPE    WS2811      // 72D ใช้โปรโตคอลแบบ WS2811
 #define COLOR_ORDER RGB         // การเรียงลำดับสีไฟ
 #define BTN_COUNT 5             // ขาสวิตช์จริง 
@@ -518,34 +518,53 @@ void fadeAll_Fadet(int fromB, int toB) { //ค่อยๆเปลียน
 void setFixedColors() {
   FastLED.clear(); // ตั้งค่า LED ทุกดวงให้เป็น CRGB(0, 0, 0); // ดำ / ดับ
   // ---------- LED LINE 1 ----------
-  for (int i = 0; i < 20 && i < NUM_LEDS_1; i++) {
+  for (int i = 0; i < 10 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Blue;
   }
-  for (int i = 20; i < 40 && i < NUM_LEDS_1; i++) {
+  for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Red;
   }
-  for (int i = 40; i < 59 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB::Green;
+ for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Blue;
+  }
+  for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(160, 32, 240);//Purple
+  }
+  for (int i = 37; i < 50 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(0, 225, 0);//Green1
+  }
+  for (int i = 50; i < 62 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(199, 26, 26); //Brown4
+  }
+  for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(0, 134, 139); //Turquoise4
   }
   // ---------- LED LINE 2 ----------
-  for (int i = 0; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(70, 130, 180); 
+  for (int i = 0; i < 34 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB( 205, 205, 0); //Yellow3
   }
-  for (int i = 20; i < 40 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Red;
-  }
-  for (int i = 40; i < 59 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(255,120,0);
-  }
+
   // ---------- LED LINE 3 ----------
-  for (int i = 0; i < 20 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(70,130,255);
+  for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
   }
-  for (int i = 20; i < 40 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(90,110,255);
+  for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB(144,238,144);//LightGreen
   }
-  for (int i = 40; i < 59 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(144,238,255);
+  for (int i = 6; i < 23 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Red; 
+  }
+  for (int i = 23; i < 37 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
+  }
+  for (int i = 37; i < 43 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue; 
+  }
+  for (int i = 43; i < 47 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
+  }
+  for (int i = 47; i < 61 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue; 
   }
   fadeAll_On();    
   FastLED.show(); 
