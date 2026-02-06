@@ -224,26 +224,29 @@ void setButton(uint8_t index, bool state){
     case 0: 
       if(state){ 
           ledPower = true;
-          fadeAll_On();
-          setFixedColors();  
-          btnState[1] = true;// เปิดรูปแบบกลุ่ม
-          btnState[2] = true;// เปิดรูปแบบกลุ่ม
-          btnState[4] = true;// เปิดรูปแบบกลุ่ม
-          setButton(1, true);// เปิดรูปแบบกลุ่ม
-          setButton(2, true);// เปิดรูปแบบกลุ่ม
-          setButton(4, true);// เปิดรูปแบบกลุ่ม
+          //fadeAll_On();
+          //setFixedColors();
+          p1_Cirecuit_Breaker_ON();
+          // รีเซ็ตสถานะปุ่มอื่น (เฉพาะ state)
           SerialBridge("Power ON ALL");
           /*setSwitch(index, true, "SERIAL");*/
       }
       else{
           ledPower = false;
-          fadeAll_Off();
-          btnState[1] = false;// เปิดรูปแบบกลุ่ม
-          btnState[2] = false;// เปิดรูปแบบกลุ่ม
-          btnState[4] = false;// เปิดรูปแบบกลุ่ม
-          setButton(1, false);// เปิดรูปแบบกลุ่ม
-          setButton(2, false);// เปิดรูปแบบกลุ่ม
-          setButton(4, false);// เปิดรูปแบบกลุ่ม
+          //fadeAll_Off();
+          p1_Cirecuit_Breaker_OFF();
+          // รีเซ็ตสถานะปุ่มอื่น (เฉพาะ state)
+          for (int i = 1; i <= 9; i++) {
+            btnState[i] = false;
+          }
+          p1_Motpr_SWING_OFF();
+          p1_Motpr_HIGH_OFF();
+          p1_Motpr_MEDLUM_OFF();
+          p1_Motpr_LOW_OFF();
+          p2_Condensing_Unil_0_OFF();
+          p2_Timer_Relay_1_OFF();
+          p2_Delay_on_Make_2_OFF();
+          p3_Motot_FE_OFF();
           SerialBridge("Power OFF ALL");
            /* setSwitch(index, false, "SERIAL");*/
       }      
@@ -252,11 +255,11 @@ void setButton(uint8_t index, bool state){
     case 1:
       if(state){ 
         SerialBridge("Motpr SWEING ON");
-        p1_Motpr_SWEING_ON();
+        p1_Motpr_SWING_ON();
       }
       else{      
         SerialBridge("Motpr SWEING OFF");
-        p1_Motpr_SWEING_OFF();
+        p1_Motpr_SWING_OFF();
       }
       break;
 
@@ -264,6 +267,12 @@ void setButton(uint8_t index, bool state){
       if(state){ 
         SerialBridge("Motpr HIGH ON");
         p1_Motpr_HIGH_ON();
+        btnState[3] = false;
+        btnState[4] = false;
+        setButton(3, false);
+        setButton(4, false);
+        p1_Motpr_MEDLUM_OFF();
+        p1_Motpr_LOW_OFF();
       }
       else{
         SerialBridge("Motpr HIGH OFF");
@@ -275,6 +284,12 @@ void setButton(uint8_t index, bool state){
       if(state){ 
         SerialBridge("Motpr MEDLUM ON");
         p1_Motpr_MEDLUM_ON();
+        btnState[2] = false;
+        btnState[4] = false;
+        setButton(2, false);
+        setButton(4, false);
+        p1_Motpr_HIGH_OFF();
+        p1_Motpr_LOW_OFF();
       }
       else{      
         SerialBridge("Motpr MEDLUM OFF");
@@ -285,6 +300,12 @@ void setButton(uint8_t index, bool state){
       if(state){
         SerialBridge("Motpr LOW ON");
         p1_Motpr_LOW_ON();
+        btnState[2] = false;
+        btnState[3] = false;
+        setButton(2, false);
+        setButton(3, false);
+        p1_Motpr_HIGH_OFF();
+        p1_Motpr_MEDLUM_OFF();
       }
       else{
         SerialBridge("Motpr LOW OFF");
@@ -295,6 +316,10 @@ void setButton(uint8_t index, bool state){
       if(state){
         SerialBridge("COMP There is no delay. ON");
         p2_Condensing_Unil_0_ON();
+        btnState[6] = false;
+        btnState[7] = false;
+        setButton(6, false);
+        setButton(7, false);
       }
       else{ 
         SerialBridge("COMP There is no delay. OFF");
@@ -305,6 +330,10 @@ void setButton(uint8_t index, bool state){
       if(state){
          SerialBridge("COMP Timer Relay ON");
         p2_Timer_Relay_1_ON();
+        btnState[5] = false;
+        btnState[7] = false;
+        setButton(5, false);
+        setButton(7, false);
       }
       else{   
         SerialBridge("COMP Timer Relay OFF");
@@ -315,6 +344,10 @@ void setButton(uint8_t index, bool state){
       if(state){ 
         SerialBridge("COMP Delay on Make ON");
         p2_Delay_on_Make_2_ON();
+        btnState[5] = false;
+        btnState[6] = false;
+        setButton(5, false);
+        setButton(6, false);
       }
       else{ 
         SerialBridge("COMP Delay on Make OFF");
@@ -323,22 +356,20 @@ void setButton(uint8_t index, bool state){
       break;
       case 8:
       if(state){ 
-        SerialBridge("RBelow the circuit breaker. ON");
-        p1_Cirecuit_Breaker_ON();
+        SerialBridge("Below the circuit breaker. ON");
+        p3_Motot_FE_ON();
       }
       else{
         SerialBridge("Below the circuit breaker. OFF");
-        p1_Cirecuit_Breaker_OFF();
+        p3_Motot_FE_OFF();
       }
       break;
       case 9:
       if(state){ 
         SerialBridge("Aoto ON");
-        ALL_Black_ON();
       }
       else{
         SerialBridge("Aoto OFF");
-        ALL_Black_OFF();
       }
       break;
       case 10:
@@ -349,6 +380,7 @@ void setButton(uint8_t index, bool state){
       else{
         SerialBridge(" OFF");
         rainbowMode = false;
+        fadeAll_On();
       }
       break;
   }
@@ -549,7 +581,7 @@ void setFixedColors() {
     leds3[i] = CRGB::Blue;
   }
   for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(144,238,144);//LightGreen
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 6; i < 23 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB::Red; 
@@ -561,7 +593,7 @@ void setFixedColors() {
     leds3[i] = CRGB::Blue; 
   }
   for (int i = 43; i < 47 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(139,69,0);//DarkOrange4
+    leds3[i] = CRGB::Blue;
   }
   for (int i = 47; i < 61 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB::Blue; 
@@ -585,198 +617,266 @@ void rainbowLoop() {
 //--------------------- The wiring sequence for each device. -----------------
 //ลำดับการเดินสายไฟสำหรับแต่ละอุปกรณ์
 void p1_Cirecuit_Breaker_ON() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 0; i < 5 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Blue;
+  // ---------- LED LINE 1-3 ----------
+  for (int i = 0; i < 10 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Blue;
   }
-  for (int i = 6; i < 10 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Red;
+  for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Red;
   }
-  for (int i = 11; i < 15 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Green;
+  for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Blue;
   }
-
+  for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
+  }
+  for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB(144,238,144);//LightGreen
+  }
+  for (int i = 23; i < 37 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
+  }
+  for (int i = 37; i < 43 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
+  }
+  for (int i = 47; i < 64 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
+  }
   FastLED.show(); 
 }
+
 void p1_Cirecuit_Breaker_OFF() {
+  // ---------- LED LINE 1-3 ----------
+  for (int i = 0; i < 10 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+  for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+  for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+    for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  }
+  for (int i = 37; i < 43 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  }
+  for (int i = 47; i < 64 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_SWING_ON() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(0, 134, 139); //Turquoise4
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_SWING_OFF() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_HIGH_ON() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 50; i < 62 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(199, 26, 26); //Brown4
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_HIGH_OFF() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 50; i < 62 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_MEDLUM_ON() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 37; i < 50 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(0, 225, 0);//Green1
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_MEDLUM_OFF() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 37; i < 50 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_LOW_ON() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(160, 32, 240);//Purple
+  }
+  FastLED.show(); 
+}
+
+void p1_Motpr_LOW_OFF() {
+  // ---------- LED LINE 1 ----------
+  for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+
+void p2_Condensing_Unil_0_ON() {
   // ---------- LED LINE 2 ----------
-  for (int i = 0; i < 5 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Blue;
+  for (int i = 28; i < 31 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB( 205, 205, 0); //Yellow3
   }
-  for (int i = 6; i < 10 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Blue;
+  //----
+  for (int i = 0; i < 28 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
   }
-  for (int i = 11; i < 15 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Blue;//ไม่มี
+  for (int i = 31; i < 34 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+    for (int i = 43; i < 47 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+
+void p2_Condensing_Unil_0_OFF() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 28; i < 31 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }    
+  FastLED.show(); 
+}
+
+void p2_Timer_Relay_1_ON() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 0; i < 9 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB( 205, 205, 0); //Yellow3
+  }
+  for (int i = 21; i < 29 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB( 205, 205, 0); //Yellow3
+  }
+  for (int i = 31; i < 34 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB( 205, 205, 0); //Yellow3
+  }
+  for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
+  }
+  for (int i = 43; i < 47 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
+  }
+  for (int i = 56; i < 61 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
+  }
+  //-------
+  for (int i = 9; i < 21 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 29; i < 31 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  FastLED.show(); 
+}
+
+void p2_Timer_Relay_1_OFF() {
+  // ---------- LED LINE 2 ----------
+  for (int i = 0; i < 9 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 21; i < 29 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 31; i < 34 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB::Black;
+  }
+  for (int i = 43; i < 47 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
   }
   
   FastLED.show(); 
 }
-void p1_Motpr_SWEING_ON() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 0; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Blue;
-  }
-  FastLED.show(); 
-}
-void p1_Motpr_SWEING_OFF() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 0; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  FastLED.show(); 
-}
-void p1_Motpr_HIGH_ON() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 21; i < 40 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Red;
-  }
-  FastLED.show(); 
-}
-void p1_Motpr_HIGH_OFF() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 21; i < 40 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  FastLED.show(); 
-}
-void p1_Motpr_MEDLUM_ON() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 41; i < 60 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Green;
-  }
-  FastLED.show(); 
-}
-void p1_Motpr_MEDLUM_OFF() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 41; i < 60 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  FastLED.show(); 
-}
-void p1_Motpr_LOW_ON() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 61; i < 80 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(207,0,255);
-  }
-  FastLED.show(); 
-}
-void p1_Motpr_LOW_OFF() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 61; i < 80 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  FastLED.show(); 
-}
-void p2_Condensing_Unil_0_ON() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
-  }
-  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
-  }
-  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
- 
-  FastLED.show(); 
-}
-void p2_Condensing_Unil_0_OFF() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-   
-  FastLED.show(); 
-}
-void p2_Timer_Relay_1_ON() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
-  }
-  for (int i = 21; i < 30 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
-  }
-   
-  FastLED.show(); 
-}void p2_Timer_Relay_1_OFF() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 21; i < 30 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-   
-  FastLED.show(); 
-}
+
 void p2_Delay_on_Make_2_ON() {
   // ---------- LED LINE 2 ----------
-  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
+  for (int i = 0; i < 13 && i < NUM_LEDS_2; i++) {
+    leds2[i] = CRGB( 205, 205, 0); //Yellow3
   }
-  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
+  for (int i = 13; i < 29 && i < NUM_LEDS_2; i++) { 
+    leds2[i] = CRGB( 205, 205, 0); //Yellow3
+  }
+  //----
+  for (int i = 29; i < 34 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB::Black;
   }
-  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
-  }
-  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-    
-  FastLED.show(); 
-}void p2_Delay_on_Make_2_OFF() {
-  // ---------- LED LINE 2 ----------
-  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB::Black;
-  }
-    
+  for (int i = 43; i < 47 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  } 
   FastLED.show(); 
 }
-void p3_Motot_FE_ON() {
+
+void p2_Delay_on_Make_2_OFF() {
   // ---------- LED LINE 2 ----------
-  for (int i = 16; i < 20 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
-  }
-  for (int i = 21; i < 23 && i < NUM_LEDS_2; i++) {
+  for (int i = 0; i < 13 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB::Black;
   }
-  for (int i = 24; i < 30 && i < NUM_LEDS_2; i++) {
-    leds2[i] = CRGB(241,194,50);
-  }
-  for (int i = 31; i < 35 && i < NUM_LEDS_2; i++) {
+  for (int i = 13; i < 29 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB::Black;
   }
-    
+  FastLED.show(); 
+}
+
+void p3_Motot_FE_ON() {
+  // ---------- LED LINE 3 ----------
+  for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue;
+  }
+  for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB(144,238,144);//LightGreen
+  }
+  for (int i = 6; i < 23 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Red; 
+  }
+  for (int i = 23; i < 37 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
+  }
+  for (int i = 37; i < 43 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue; 
+  }
+  for (int i = 47; i < 61 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Blue; 
+  }  
+  FastLED.show(); 
+}
+void p3_Motot_FE_OFF() {
+  // ---------- LED LINE 3 ----------
+  for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  }
+  for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  }
+  for (int i = 6; i < 23 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black; 
+  }
+  for (int i = 23; i < 37 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black;
+  }
+  for (int i = 37; i < 43 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black; 
+  }
+  for (int i = 47; i < 61 && i < NUM_LEDS_3; i++) {
+    leds3[i] = CRGB::Black; 
+  } 
   FastLED.show(); 
 }
 void p4_Magnetic_Contactor(bool on) {
