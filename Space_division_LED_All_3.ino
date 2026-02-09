@@ -12,8 +12,8 @@
 #define NUM_LEDS_3    61        // จำนวนหลอดตามจริง ของวงจรที3
 #define LED_TYPE    WS2811      // 72D ใช้โปรโตคอลแบบ WS2811
 #define COLOR_ORDER RGB         // การเรียงลำดับสีไฟ
-#define BTN_COUNT 5             // ขาสวิตช์จริง 
-#define HW_BTN_COUNT   5        // จำนวนสวิตช์จริง (ฮาร์ดแวร์)
+#define BTN_COUNT 10             // ขาสวิตช์จริง 
+#define HW_BTN_COUNT   10        // จำนวนสวิตช์จริง (ฮาร์ดแวร์)
 #define WEB_BTN_COUNT  11        // จำนวนปุ่มในเว็บ
 
 // ---------------- Set up basic LED settings. ---------------------
@@ -44,11 +44,11 @@ bool requestRainbow = false;
 
 // ---------------- Set up basic switches. ---------------------
 //ตั้งค่าสวิทช์พื้นฐาน
-const uint8_t BTN_PIN[HW_BTN_COUNT] = {25, 26, 27, 32, 33};           // ขาปุ่มกด{27, 26, 25, 33, 32};เพิ่มสวิตช์ได้✔ แนะนำ GPIO: 4, 13–17, 21–23⚠️ GPIO 34–39 ต้องมี R ดึง❌ หลีกเลี่ยง 0, 2, 6–11, 1, 3
+const uint8_t BTN_PIN[HW_BTN_COUNT] = { 13, 14, 15, 16, 17, 25, 26, 27, 32, 33};           // ขาปุ่มกด{27, 26, 25, 33, 32};เพิ่มสวิตช์ได้✔ แนะนำ GPIO: 4, 13–17, 21–23⚠️ GPIO 34–39 ต้องมี R ดึง❌ หลีกเลี่ยง 0, 2, 6–11, 1, 3
 
 bool btnState[WEB_BTN_COUNT] = {0};     // สถานะ ON / OFF กลาง
-bool lastHWState[HW_BTN_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH};
-bool lastBtn[HW_BTN_COUNT]   = {HIGH, HIGH, HIGH, HIGH, HIGH,};         // สถานะปุ่มก่อนหน้า
+bool lastHWState[HW_BTN_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
+bool lastBtn[HW_BTN_COUNT]   = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};         // สถานะปุ่มก่อนหน้า
 bool internalUpdate = false;
 
 // ---------------- WiFi AP. ---------------------
