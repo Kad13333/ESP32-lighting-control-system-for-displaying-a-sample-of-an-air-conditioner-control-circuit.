@@ -50,6 +50,11 @@ bool btnState[WEB_BTN_COUNT] = {0};     // สถานะ ON / OFF กลาง
 bool lastHWState[HW_BTN_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
 bool lastBtn[HW_BTN_COUNT]   = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};         // สถานะปุ่มก่อนหน้า
 bool internalUpdate = false;
+// -----------------Auto Mode---------------------
+bool autoMode = false;
+
+uint8_t autoStep = 0;
+unsigned long autoTimer = 0;
 
 // ---------------- WiFi AP. ---------------------
 const char* ssid = "ESP32_CONTROL";
@@ -367,9 +372,20 @@ void setButton(uint8_t index, bool state){
       case 9:
       if(state){ 
         SerialBridge("Aoto ON");
+        autoMode = true;
+        autoStep = 0;
+        autoTimer = 0;
       }
       else{
         SerialBridge("Aoto OFF");
+        autoMode = false;
+        autoTimer = 0;
+
+        // กลับสู่โหมดปกติ
+        for (int i = 1; i <= 8; i++) {
+          setSwitch(i, false, "AUTO");
+        }
+        setFixedColors();
       }
       break;
       case 10:
@@ -461,6 +477,58 @@ void handleCmd(){
 
   processCommand(cmd, "WEB");
   server.send(200,"text/plain","OK");
+}
+//-------------- ตารางอีเวนต์ ---------------
+struct AutoEvent {
+  uint8_t buttonIndex;      // ปุ่มที่จะเปิด
+  unsigned long duration;   // เวลา (ms)
+};
+
+//  ปรับเวลาได้ตรงนี้
+AutoEvent autoTable[] = {
+  {0, 5000},   // Power ON ALL
+  {1, 5000},   // Motpr SWEING
+  {2, 5000},   // Motpr HIGH
+  {3, 8000},   // Motpr MEDLUM
+  {4, 5000},   // Motpr LOW
+  {5, 5000},   // COMP There is no delay.
+  {6, 5000},   // COMP Timer Relay.
+  {7, 8000},   // COMP Delay on Make.
+  {8, 8000},   //Below the circuit breaker
+};
+
+const uint8_t AUTO_EVENT_COUNT =
+  sizeof(autoTable) / sizeof(autoTable[0]);
+
+void updateAutoMode() {
+  if (!autoMode) return;
+
+  unsigned long now = millis();
+
+  // เริ่ม event ใหม่
+  if (autoTimer == 0) {
+    autoTimer = now;
+
+    // ปิดทุกปุ่มก่อน (กันชน)
+    for (int i = 1; i <= 8; i++) {
+      setSwitch(i, false, "AUTO");
+    }
+
+    uint8_t idx = autoTable[autoStep].buttonIndex;
+    setSwitch(idx, true, "AUTO");
+
+    SerialBridge("AUTO STEP " + String(autoStep + 1));
+  }
+
+  // หมดเวลา → ไป step ถัดไป
+  if (now - autoTimer >= autoTable[autoStep].duration) {
+    autoTimer = 0;
+    autoStep++;
+
+    if (autoStep >= AUTO_EVENT_COUNT) {
+      autoStep = 0; //  วน
+    }
+  }
 }
 
 //------------------- Commands used with switches. ---------------
@@ -1209,9 +1277,12 @@ void setup() {
 void loop() {
   dnsServer.processNextRequest();
   server.handleClient();
-  checkCommand(); // คำสั่ง cmd
-  readButtons();   //สวิตช์เปิด–ปิดจริง
-
+  checkCommand(); 
+  readButtons();   
+  
+  if (autoMode) {
+    updateAutoMode();
+  }
 
   if (rainbowMode && ledPower) {
     rainbowLoopNonBlocking();
