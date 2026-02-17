@@ -33,7 +33,7 @@ CRGB parseColor(String c) {
   return CRGB::White;
 }
 
-uint8_t globalBrightness = 90;   // ความสว่าง (0–255)
+uint8_t globalBrightness = 50;   // ความสว่าง (0–255)
 uint8_t Fadet_time = 10;         // นวงเวล่า (10)
 uint8_t Brightness_delay = 1;    // หน่วงเวลาความสว่าง (1)
 uint8_t Brightness_delay_2 = 4;  // หน่วงเวลาความสว่างไฟวิง (4)
@@ -44,7 +44,7 @@ bool requestRainbow = false;
 
 // ---------------- Set up basic switches. ---------------------
 //ตั้งค่าสวิทช์พื้นฐาน
-const uint8_t BTN_PIN[HW_BTN_COUNT] = { 13, 14, 15, 16, 17, 25, 26, 27, 32, 33};           // ขาปุ่มกด{27, 26, 25, 33, 32};เพิ่มสวิตช์ได้✔ แนะนำ GPIO: 4, 13–17, 21–23⚠️ GPIO 34–39 ต้องมี R ดึง❌ หลีกเลี่ยง 0, 2, 6–11, 1, 3
+const uint8_t BTN_PIN[HW_BTN_COUNT] = { 13, 14, 15, 16, 17, 25, 26, 32, 27, 33};           // ขาปุ่มกด{27, 26, 25, 33, 32};เพิ่มสวิตช์ได้✔ แนะนำ GPIO: 4, 13–17, 21–23⚠️ GPIO 34–39 ต้องมี R ดึง❌ หลีกเลี่ยง 0, 2, 6–11, 1, 3
 
 bool btnState[WEB_BTN_COUNT] = {0};     // สถานะ ON / OFF กลาง
 bool lastHWState[HW_BTN_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
@@ -428,7 +428,7 @@ void handleToggle(){
     return;
   }
 
-  setSwitch(b, !btnState[b], "WEB");   // ⭐ ใช้ฟังก์ชันกลาง
+  setSwitch(b, !btnState[b], "WEB");   //  ใช้ฟังก์ชันกลาง
 
   server.send(
     200,
@@ -486,15 +486,15 @@ struct AutoEvent {
 
 //  ปรับเวลาได้ตรงนี้
 AutoEvent autoTable[] = {
-  {0, 5000},   // Power ON ALL
-  {1, 5000},   // Motpr SWEING
-  {2, 5000},   // Motpr HIGH
-  {3, 8000},   // Motpr MEDLUM
-  {4, 5000},   // Motpr LOW
-  {5, 5000},   // COMP There is no delay.
-  {6, 5000},   // COMP Timer Relay.
-  {7, 8000},   // COMP Delay on Make.
-  {8, 8000},   //Below the circuit breaker
+  {0, 2000},   // Power ON ALL
+  {1, 2000},   // Motpr SWEING
+  {2, 2000},   // Motpr HIGH
+  {3, 2000},   // Motpr MEDLUM
+  {4, 2000},   // Motpr LOW
+  {5, 2000},   // COMP There is no delay.
+  {6, 2000},   // COMP Timer Relay.
+  {7, 2000},   // COMP Delay on Make.
+  {8, 2000},   //Below the circuit breaker
 };
 
 const uint8_t AUTO_EVENT_COUNT =
@@ -577,7 +577,7 @@ void readButtons() {
 
 
 // ---------------- LED control commands. ---------------------
-//คุมความสว่าง (ศูนย์กลาง)
+//คุมความสว่าง 
 void applyBrightness() {
   FastLED.setBrightness(globalBrightness);
 }
