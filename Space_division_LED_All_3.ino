@@ -14,7 +14,7 @@
 #define COLOR_ORDER RGB         // การเรียงลำดับสีไฟ
 #define BTN_COUNT 10             // ขาสวิตช์จริง 
 #define HW_BTN_COUNT   10        // จำนวนสวิตช์จริง (ฮาร์ดแวร์)
-#define WEB_BTN_COUNT  11        // จำนวนปุ่มในเว็บ
+#define WEB_BTN_COUNT  10        // จำนวนปุ่มในเว็บ
 
 // ---------------- Set up basic LED settings. ---------------------
 // ตัวเก็บขอมูล
@@ -55,6 +55,7 @@ bool autoMode = false;
 
 uint8_t autoStep = 0;
 unsigned long autoTimer = 0;
+bool autoStepStarted = false;  
 
 // ---------------- WiFi AP. ---------------------
 const char* ssid = "ESP32_CONTROL";
@@ -64,8 +65,8 @@ DNSServer dnsServer;
 WebServer server(80);
 
 //Button 
-const char* buttonName[11] = {
-  "Power ON ALL","Motpr SWEING","Motpr HIGH","Motpr MEDLUM","Motpr LOW","COMP There is no delay.","COMP Timer Relay","COMP Delay on Make","Below the circuit breaker.","Aoto", "??"
+const char* buttonName[10] = {
+  "Power ON ALL","Motor HIGH","Motor MEDLUM","Motor LOW","COMP","COMP Timer Relay","COMP Delay","Breaker.","Auto", "RGB Run"
 }; 
 // Serial Log
 String serialLog = "";
@@ -241,10 +242,9 @@ void setButton(uint8_t index, bool state){
           //fadeAll_Off();
           p1_Cirecuit_Breaker_OFF();
           // รีเซ็ตสถานะปุ่มอื่น (เฉพาะ state)
-          for (int i = 1; i <= 9; i++) {
+          for (int i = 1; i <= 7; i++) {
             btnState[i] = false;
           }
-          p1_Motpr_SWING_OFF();
           p1_Motpr_HIGH_OFF();
           p1_Motpr_MEDLUM_OFF();
           p1_Motpr_LOW_OFF();
@@ -259,23 +259,10 @@ void setButton(uint8_t index, bool state){
 
     case 1:
       if(state){ 
-        SerialBridge("Motpr SWEING ON");
-        p1_Motpr_SWING_ON();
-      }
-      else{      
-        SerialBridge("Motpr SWEING OFF");
-        p1_Motpr_SWING_OFF();
-      }
-      break;
-
-    case 2:
-      if(state){ 
         SerialBridge("Motpr HIGH ON");
         p1_Motpr_HIGH_ON();
+        btnState[2] = false;
         btnState[3] = false;
-        btnState[4] = false;
-        setButton(3, false);
-        setButton(4, false);
         p1_Motpr_MEDLUM_OFF();
         p1_Motpr_LOW_OFF();
       }
@@ -285,14 +272,14 @@ void setButton(uint8_t index, bool state){
       }
       break;
 
-    case 3:
+    case 2:
       if(state){ 
         SerialBridge("Motpr MEDLUM ON");
         p1_Motpr_MEDLUM_ON();
-        btnState[2] = false;
-        btnState[4] = false;
-        setButton(2, false);
-        setButton(4, false);
+        btnState[1] = false;
+        btnState[3] = false;
+        setButton(1, false);
+        setButton(3, false);
         p1_Motpr_HIGH_OFF();
         p1_Motpr_LOW_OFF();
       }
@@ -301,14 +288,14 @@ void setButton(uint8_t index, bool state){
         p1_Motpr_MEDLUM_OFF();
       }
       break;
-    case 4:
+    case 3:
       if(state){
         SerialBridge("Motpr LOW ON");
         p1_Motpr_LOW_ON();
+        btnState[1] = false;
         btnState[2] = false;
-        btnState[3] = false;
+        setButton(1, false);
         setButton(2, false);
-        setButton(3, false);
         p1_Motpr_HIGH_OFF();
         p1_Motpr_MEDLUM_OFF();
       }
@@ -317,49 +304,49 @@ void setButton(uint8_t index, bool state){
         p1_Motpr_LOW_OFF();
       }
       break;
-      case 5:
+      case 4:
       if(state){
         SerialBridge("COMP There is no delay. ON");
         p2_Condensing_Unil_0_ON();
+        btnState[5] = false;
         btnState[6] = false;
-        btnState[7] = false;
+        setButton(5, false);
         setButton(6, false);
-        setButton(7, false);
       }
       else{ 
         SerialBridge("COMP There is no delay. OFF");
         p2_Condensing_Unil_0_OFF();
       }
       break;
-      case 6:
+      case 5:
       if(state){
          SerialBridge("COMP Timer Relay ON");
         p2_Timer_Relay_1_ON();
-        btnState[5] = false;
-        btnState[7] = false;
-        setButton(5, false);
-        setButton(7, false);
+        btnState[4] = false;
+        btnState[6] = false;
+        setButton(4, false);
+        setButton(6, false);
       }
       else{   
         SerialBridge("COMP Timer Relay OFF");
         p2_Timer_Relay_1_OFF();
       }
       break;
-      case 7:
+      case 6:
       if(state){ 
         SerialBridge("COMP Delay on Make ON");
         p2_Delay_on_Make_2_ON();
+        btnState[4] = false;
         btnState[5] = false;
-        btnState[6] = false;
+        setButton(4, false);
         setButton(5, false);
-        setButton(6, false);
       }
       else{ 
         SerialBridge("COMP Delay on Make OFF");
         p2_Delay_on_Make_2_OFF();
       }
       break;
-      case 8:
+      case 7:
       if(state){ 
         SerialBridge("Below the circuit breaker. ON");
         p3_Motot_FE_ON();
@@ -369,26 +356,28 @@ void setButton(uint8_t index, bool state){
         p3_Motot_FE_OFF();
       }
       break;
-      case 9:
+      case 8:
       if(state){ 
-        SerialBridge("Aoto ON");
+        SerialBridge("Auto ON");
         autoMode = true;
         autoStep = 0;
         autoTimer = 0;
+        autoStepStarted = false;   
       }
       else{
-        SerialBridge("Aoto OFF");
+        SerialBridge("Auto OFF");
         autoMode = false;
         autoTimer = 0;
+        autoStepStarted = false;  
 
-        // กลับสู่โหมดปกติ
-        for (int i = 1; i <= 8; i++) {
+        for (int i = 0 ; i < WEB_BTN_COUNT; i++) {
           setSwitch(i, false, "AUTO");
         }
         setFixedColors();
       }
       break;
-      case 10:
+
+      case 9:
       if(state){ 
         SerialBridge(" ON");
         rainbowMode = true;
@@ -486,47 +475,48 @@ struct AutoEvent {
 
 //  ปรับเวลาได้ตรงนี้
 AutoEvent autoTable[] = {
-  {0, 2000},   // Power ON ALL
-  {1, 2000},   // Motpr SWEING
-  {2, 2000},   // Motpr HIGH
-  {3, 2000},   // Motpr MEDLUM
-  {4, 2000},   // Motpr LOW
-  {5, 2000},   // COMP There is no delay.
-  {6, 2000},   // COMP Timer Relay.
-  {7, 2000},   // COMP Delay on Make.
-  {8, 2000},   //Below the circuit breaker
-};
 
+  {1, 2000}, // Motor HIGH
+  {2, 2000}, // Motor MEDLUM
+  {3, 2000}, // Motor LOW
+  {4, 2000}, // COMP
+  {5, 2000}, // Timer
+  {6, 2000}, // Delay
+  {7, 2000}, // Breaker
+};
 const uint8_t AUTO_EVENT_COUNT =
   sizeof(autoTable) / sizeof(autoTable[0]);
+
 
 void updateAutoMode() {
   if (!autoMode) return;
 
   unsigned long now = millis();
 
-  // เริ่ม event ใหม่
-  if (autoTimer == 0) {
+  if (!autoStepStarted) {
+    autoStepStarted = true;
     autoTimer = now;
 
-    // ปิดทุกปุ่มก่อน (กันชน)
+    uint8_t idx = autoTable[autoStep].buttonIndex;
+
+    // ปิดปุ่มอื่น
     for (int i = 1; i <= 8; i++) {
-      setSwitch(i, false, "AUTO");
+      if (i != idx) setSwitch(i, false, "AUTO");
     }
 
-    uint8_t idx = autoTable[autoStep].buttonIndex;
     setSwitch(idx, true, "AUTO");
 
-    SerialBridge("AUTO STEP " + String(autoStep + 1));
+    Serial.printf("[AUTO] step %d start\n", autoStep);
   }
 
-  // หมดเวลา → ไป step ถัดไป
   if (now - autoTimer >= autoTable[autoStep].duration) {
-    autoTimer = 0;
+    autoStepStarted = false;
     autoStep++;
 
     if (autoStep >= AUTO_EVENT_COUNT) {
-      autoStep = 0; //  วน
+      autoStep = 0;
+      autoMode = false;
+      Serial.println("[AUTO] finished");
     }
   }
 }
@@ -540,18 +530,16 @@ void toggleButton(uint8_t i) {
 //ฟังก์ชันตั้งค่าสวิตช์จากภายนอก
 void setSwitch(uint8_t i, bool state, const char* source){
   if(i >= WEB_BTN_COUNT) return;
-
   if(btnState[i] == state) return;
+
+  if(autoMode && strcmp(source, "AUTO") != 0){
+    autoMode = false;
+    SerialBridge("[FSM] AUTO cancelled by MANUAL");
+  }
+
   btnState[i] = state;
-
-  SerialBridge(
-    String("[") + source + "] " +
-    buttonName[i] + " -> " +
-    (state ? "ON" : "OFF")
-  );
-    setButton(i, state);   // hardware logic
+  setButton(i, state);
 }
-
 
 // อ่านปุ่ม
 void readButtons() {
@@ -624,8 +612,11 @@ void setFixedColors() {
   for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Red;
   }
- for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
+  for (int i = 16; i < 20 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Blue;
+  }
+ for (int i = 20; i < 23 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB(160, 32, 240);//Purple
@@ -637,7 +628,7 @@ void setFixedColors() {
     leds1[i] = CRGB(199, 26, 26); //Brown4
   }
   for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB(0, 134, 139); //Turquoise4
+    leds1[i] = CRGB::Blue;
   }
   // ---------- LED LINE 2 ----------
   for (int i = 0; i < 34 && i < NUM_LEDS_2; i++) {
@@ -692,14 +683,20 @@ void p1_Cirecuit_Breaker_ON() {
   for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Red;
   }
-  for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
+   for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Blue;
+  }
+  for (int i = 16; i < 20 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Blue;
+  }
+ for (int i = 20; i < 23 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB::Blue;
   }
   for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(144,238,144);//LightGreen
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 23; i < 37 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB(139,69,0);//DarkOrange4
@@ -710,6 +707,7 @@ void p1_Cirecuit_Breaker_ON() {
   for (int i = 47; i < 64 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB::Blue;
   }
+
   FastLED.show(); 
 }
 
@@ -719,6 +717,9 @@ void p1_Cirecuit_Breaker_OFF() {
     leds1[i] = CRGB::Black;
   }
   for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+   for (int i = 61; i < 73 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Black;
   }
   for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
@@ -739,7 +740,7 @@ void p1_Cirecuit_Breaker_OFF() {
 void p1_Motpr_SWING_ON() {
   // ---------- LED LINE 1 ----------
   for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB(0, 134, 139); //Turquoise4
+    leds1[i] = CRGB::Blue;
   }
   FastLED.show(); 
 }
@@ -827,7 +828,10 @@ void p2_Condensing_Unil_0_OFF() {
 }
 
 void p2_Timer_Relay_1_ON() {
-  // ---------- LED LINE 2 ----------
+  // ---------- LED LINE 2 
+  for (int i = 0; i < 6 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Blue;
+  }
   for (int i = 0; i < 9 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB( 205, 205, 0); //Yellow3
   }
@@ -909,7 +913,7 @@ void p3_Motot_FE_ON() {
     leds3[i] = CRGB::Blue;
   }
   for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(144,238,144);//LightGreen
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 6; i < 23 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB::Red; 
@@ -1069,21 +1073,28 @@ void line3_zoneOff(int start, int end) {
 }
 void rainbowLoopNonBlocking() {
   static uint32_t lastUpdate = 0;
-  static float baseHue = 0;
+  static uint8_t baseHue = 0;
+  static uint8_t currentBrightness = 0;
 
-  if (millis() - lastUpdate < 5) return; // 50 FPS
+  if (millis() - lastUpdate < 20) return;
   lastUpdate = millis();
 
+  // 🔆 Fade in
+  if (currentBrightness < globalBrightness) {
+    currentBrightness++;
+    FastLED.setBrightness(currentBrightness);
+  }
+
   for (int i = 0; i < NUM_LEDS_1; i++)
-    leds1[i] = CHSV(baseHue + i * 3, 255, globalBrightness);
+    leds1[i] = CHSV(baseHue + i * 3, 255, 255);
 
   for (int i = 0; i < NUM_LEDS_2; i++)
-    leds2[i] = CHSV(baseHue + i * 3, 255, globalBrightness);
+    leds2[i] = CHSV(baseHue + i * 3, 255, 255);
 
   for (int i = 0; i < NUM_LEDS_3; i++)
-    leds3[i] = CHSV(baseHue + i * 3, 255, globalBrightness);
+    leds3[i] = CHSV(baseHue + i * 3, 255, 255);
 
-  baseHue += 0.12;   // ขยับช้า
+  baseHue++;
   FastLED.show();
 }
 //-------------------Read commands via Serial. (CMD)------------------------
@@ -1277,15 +1288,14 @@ void setup() {
 void loop() {
   dnsServer.processNextRequest();
   server.handleClient();
-  checkCommand(); 
-  readButtons();   
-  
-  if (autoMode) {
-    updateAutoMode();
+  readButtons();
+  checkCommand();
+
+  if(autoMode){
+    updateAutoMode();   
   }
 
   if (rainbowMode && ledPower) {
     rainbowLoopNonBlocking();
   }
-
 }
