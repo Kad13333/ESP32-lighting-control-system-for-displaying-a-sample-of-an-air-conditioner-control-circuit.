@@ -36,7 +36,7 @@ CRGB parseColor(String c) {
 
 uint8_t globalBrightness = 50;   // ความสว่าง (0–255)
 uint8_t Brightness_delay = 1;    // หน่วงเวลาความสว่าง (1)
-uint8_t Brightness_delay_2 = 4;  // หน่วงเวลาความสว่างไฟวิง (4)  //----------เเก่ปันหาเรืองความสะวาง-----------------//
+uint8_t Brightness_delay_2 = 50;  // หน่วงเวลาความสว่างไฟวิง (4)  //----------เเก่ปันหาเรืองความสะวาง-----------------//
 
 // ตัวแปรโหมด
 bool ledPower = true;         // เปิด/ปิดไฟทั้งหมด
@@ -48,8 +48,8 @@ bool requestRainbow = false;  //เรียกสีสายรุ้ง
 const uint8_t BTN_PIN[HW_BTN_COUNT] = { 13, 14, 15, 16, 17, 25, 26, 32, 27, 33};           // ขาปุ่มกดเพิ่มสวิตช์ได้  แนะนำ GPIO: 4, 13–17, 21–23, 25, 33, 32  ส่วน GPIO 34–39 ต้องมี R ดึง  หลีกเลี่ยง 0, 2, 6–11, 1, 3
 
 bool btnState[WEB_BTN_COUNT] = {0};     // สถานะ ON / OFF กลาง
-bool lastHWState[HW_BTN_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
-bool lastBtn[HW_BTN_COUNT]   = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};         
+bool lastHWState[HW_BTN_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH}; // = WEB_BTN_COUNT
+bool lastBtn[HW_BTN_COUNT]   = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};   // = WEB_BTN_COUNT      
 bool internalUpdate = false;
 
 // -----------------Auto Mode---------------------
@@ -66,9 +66,7 @@ DNSServer dnsServer;
 WebServer server(80);
 
 //Button (ปุ่มในเว็บ)
-const char* buttonName[10] = {
-  "Power ON ALL","Motor HIGH","Motor MEDLUM","Motor LOW","COMP","COMP Timer Relay","COMP Delay","breaker","Auto", "RGB RUN"
-}; 
+const char* buttonName[10] = {"Power ON ALL","Motor HIGH","Motor MEDLUM","Motor LOW","COMP","COMP Timer Relay","COMP Delay","breaker","Auto", "RGB RUN"}; 
 // Serial Log
 String serialLog = "";
 
@@ -254,6 +252,8 @@ void setButton(uint8_t index, bool state){
 
     case 1:
       if(state){
+          p1_medlum_OFF();
+          p1_low_OFF(); 
           p1_high_ON();
           SerialBridge("Motpr HIGH ON");
           // รีเซ็ตสถานะปุ่มอื่น (เฉพาะ state)
@@ -272,14 +272,14 @@ void setButton(uint8_t index, bool state){
 
     case 2:
       if(state){
+          p1_high_OFF();
+          p1_low_OFF();
           p1_medlum_ON();
           SerialBridge("Motor MEDLUM ON");
           btnState[1] = false;
           btnState[3] = false;
           //setButton(1, false);
           //setButton(3, false);
-          p1_high_OFF();
-          p1_low_OFF();
       }
       else{
           p1_medlum_OFF();
@@ -289,14 +289,14 @@ void setButton(uint8_t index, bool state){
 
     case 3:
       if(state){ 
+          p1_high_OFF();
+          p1_medlum_OFF(); 
           p1_low_ON();
           SerialBridge("Motor LOW ON");
           btnState[1] = false;
           btnState[2] = false;
           //setButton(1, false);
-          //setButton(2, false);
-          p1_high_OFF();
-          p1_medlum_OFF();      
+          //setButton(2, false);     
       }
       else{ 
           SerialBridge("Motpr LOW OFF");
@@ -306,14 +306,14 @@ void setButton(uint8_t index, bool state){
 
     case 4:
       if(state){
+          p2_comp_timer_relay_OFF();
+          p2_comp_delay_OFF();
           p2_comp_ON();
           SerialBridge("COMP ON");
           btnState[5] = false;
           btnState[6] = false;
           //setButton(5, false);
           //setButton(6, false);
-          p2_comp_timer_relay_OFF();
-          p2_comp_delay_OFF();
       }
       else{
            p2_comp_OFF();
@@ -323,14 +323,14 @@ void setButton(uint8_t index, bool state){
 
     case 5:
       if(state){
+          p2_comp_OFF();
+          p2_comp_delay_OFF();
           p2_comp_timer_relay_ON();
           SerialBridge("COMP ON");
           btnState[4] = false;
           btnState[6] = false;
           //setButton(4, false);
           //setButton(6, false);
-          p2_comp_timer_relay_OFF();
-          p2_comp_delay_OFF();
       }
       else{
         p2_comp_timer_relay_OFF();
@@ -340,14 +340,14 @@ void setButton(uint8_t index, bool state){
 
     case 6:
       if(state){
+          p2_comp_OFF();
+          p2_comp_timer_relay_OFF();
           p2_comp_delay_ON();
           SerialBridge("COMP Delay ON");
           btnState[4] = false;
           btnState[5] = false;
           //setButton(4, false);
           //setButton(5, false);
-          p2_comp_OFF();
-          p2_comp_timer_relay_OFF();
       }
       else{   
           p2_comp_delay_OFF();
@@ -504,14 +504,14 @@ struct AutoEvent {
 
 //  ปรับเวลาได้ตรงนี้
 AutoEvent autoTable[] = {
-  {0, 2000},   // Power ON ALL
-  {1, 2000},   // Motor HIGH
-  {2, 2000},   // Motor MEDLUM
-  {3, 2000},   // Motor LOW
-  {4, 2000},   // COMP
-  {5, 2000},   // COMP Timer Relay 
-  {6, 2000},   // COMP Delay
-  {7, 2000},   // Breaker
+  {0, 3000},   // Power ON ALL
+  {1, 3000},   // Motor HIGH
+  {2, 3000},   // Motor MEDLUM
+  {3, 3000},   // Motor LOW
+  {4, 3000},   // COMP
+  {5, 3000},   // COMP Timer Relay 
+  {6, 3000},   // COMP Delay
+  {7, 3000},   // Breaker
 };
 //*       ||       **       ||       **       ||       **       ||       **       ||       *                           *       ||       **       ||       **       ||       *
 //*-------\/-------**-------\/-------**-------\/-------**-------\/-------**-------\/-------* ตั้งค่าตำแหน่ง LED และสีที่จะติด *-------\/-------**-------\/-------**-------\/-------*
@@ -526,11 +526,14 @@ void setFixedColors() {
   for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Red;
   }
- for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
+ for (int i = 16; i < 20 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Blue;
   }
+   for (int i = 20; i < 23 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(139,69,0);//DarkOrange4
+  }
   for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB(160, 32, 240);//Purple
+    leds1[i] = CRGB::Blue;
   }
   for (int i = 37; i < 50 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB(0, 225, 0);//Green1
@@ -539,7 +542,7 @@ void setFixedColors() {
     leds1[i] = CRGB(199, 26, 26); //Brown4
   }
   for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB(0, 134, 139); //Turquoise4
+    leds1[i] = CRGB::Blue;
   }
   // ---------- LED LINE 2 ----------
   for (int i = 0; i < 34 && i < NUM_LEDS_2; i++) {
@@ -591,14 +594,20 @@ void p0_main_breaker_on() {
   for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Red;
   }
-  for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
+    for (int i = 62; i < 73 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Blue;
+  }
+  for (int i = 16; i < 20 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Blue;
+  }
+   for (int i = 20; i < 23 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 0; i < 2 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB::Blue;
   }
   for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(144,238,144);//LightGreen
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 23; i < 37 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB(139,69,0);//DarkOrange4
@@ -618,6 +627,9 @@ void p0_main_breaker_OFF() {
     leds1[i] = CRGB::Black;
   }
   for (int i = 10; i < 16 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Black;
+  }
+   for (int i = 61; i < 73 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB::Black;
   }
   for (int i = 16; i < 23 && i < NUM_LEDS_1; i++) {
@@ -670,7 +682,7 @@ void p1_medlum_OFF() {
 void p1_low_ON() {
   // ---------- LED LINE 1 ----------
   for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB(160, 32, 240);//Purple
+    leds1[i] = CRGB(103, 8, 107);//Purple
   }
   FastLED.show(); 
 }
@@ -711,6 +723,9 @@ void p2_comp_OFF() {
 
 void p2_comp_timer_relay_ON() {
   // ---------- LED LINE 2 ----------
+  for (int i = 0; i < 6 && i < NUM_LEDS_1; i++) {
+    leds1[i] = CRGB::Blue;
+  }
   for (int i = 0; i < 9 && i < NUM_LEDS_2; i++) {
     leds2[i] = CRGB( 205, 205, 0); //Yellow3
   }
@@ -792,7 +807,7 @@ void p3_breaker_ON() {
     leds3[i] = CRGB::Blue;
   }
   for (int i = 2; i < 6 && i < NUM_LEDS_3; i++) {
-    leds3[i] = CRGB(144,238,144);//LightGreen
+    leds3[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 6; i < 23 && i < NUM_LEDS_3; i++) {
     leds3[i] = CRGB::Red; 
