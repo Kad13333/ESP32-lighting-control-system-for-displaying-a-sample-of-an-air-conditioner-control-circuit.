@@ -66,7 +66,7 @@ DNSServer dnsServer;
 WebServer server(80);
 
 //Button (ปุ่มในเว็บ)
-const char* buttonName[10] = {"Power ON ALL","Motor HIGH","Motor MEDLUM","Motor LOW","COMP","COMP Timer Relay","COMP Delay","breaker","Auto", "RGB RUN"}; 
+const char* buttonName[10] = {"Power ON ALL","Motor HIGH","Motor MEDLUM","Motor LOW","COMP","COMP Timer Relay","COMP Delay","Power Control","Auto", "RGB RUN"}; 
 // Serial Log
 String serialLog = "";
 
@@ -377,7 +377,7 @@ void setButton(uint8_t index, bool state){
           autoMode = false;
           autoTimer = 0;
           // กลับสู่โหมดปกติ
-          for (int i = 1; i <= 7; i++) {
+          for (int i = 0; i <= 7; i++) {
           setSwitch(i, false, "AUTO");
           btnState[i] = false;
           }
@@ -403,7 +403,7 @@ void setButton(uint8_t index, bool state){
           rainbowMode = false;
           fadeAll_On();
           // รีเซ็ตสถานะปุ่มอื่น (เฉพาะ state)
-          for (int i = 1; i <= 9; i++) {
+          for (int i = 0; i <= 9; i++) {
             btnState[i] = false;
           }
           p0_main_breaker_OFF();
@@ -533,7 +533,7 @@ void setFixedColors() {
     leds1[i] = CRGB(139,69,0);//DarkOrange4
   }
   for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB::Blue;
+    leds1[i] = CRGB(103, 8, 107);//purple
   }
   for (int i = 37; i < 50 && i < NUM_LEDS_1; i++) {
     leds1[i] = CRGB(0, 225, 0);//Green1
@@ -682,7 +682,7 @@ void p1_medlum_OFF() {
 void p1_low_ON() {
   // ---------- LED LINE 1 ----------
   for (int i = 23; i < 37 && i < NUM_LEDS_1; i++) {
-    leds1[i] = CRGB(103, 8, 107);//Purple
+    leds1[i] = CRGB(103, 8, 107);//purple
   }
   FastLED.show(); 
 }
@@ -887,18 +887,24 @@ void updateAutoMode() {
 void rainbowLoopNonBlocking() {
   static uint32_t lastUpdate = 0;
   static float baseHue = 0;
+  static uint8_t currentBrightness = 0;
   if (millis() - lastUpdate < 24) return; // 50 FPS
   lastUpdate = millis();
+  // 🔆 Fade in
+  if (currentBrightness < globalBrightness) {
+    currentBrightness++;
+    FastLED.setBrightness(currentBrightness);
+  }
   for (int i = 0; i < NUM_LEDS_1; i++)
-    leds1[i] = CHSV(baseHue + i * 3, 255, globalBrightness);
+    leds1[i] = CHSV(baseHue + i * 3, 255, 255);
 
   for (int i = 0; i < NUM_LEDS_2; i++)
-    leds2[i] = CHSV(baseHue + i * 3, 255, globalBrightness);
+    leds2[i] = CHSV(baseHue + i * 3, 255, 255);
 
   for (int i = 0; i < NUM_LEDS_3; i++)
-    leds3[i] = CHSV(baseHue + i * 3, 255, globalBrightness);
+    leds3[i] = CHSV(baseHue + i * 3, 255, 255);
 
-  baseHue += 0.12;   // ขยับช้า
+   baseHue++;
   FastLED.show();
 }
 //------------------- คำสั่งที่ใช้ร่วมกับสวิตช์ ---------------
@@ -1271,8 +1277,8 @@ void setup() {
 void loop() {
   dnsServer.processNextRequest();
   server.handleClient();
-  checkCommand(); 
-  readButtons();   
+  readButtons();
+  checkCommand();
   
   if (autoMode) {
     updateAutoMode();
